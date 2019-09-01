@@ -1,0 +1,83 @@
+# Stages for my CI/CD Pipeline
+stages:
+  - build
+  - test
+  - image-build
+  - deploy-dev
+
+# Global Variable 
+variables:
+    IMAGE_NAME: gitlabci-app
+
+
+# Build stage with maven docker image and uploading artifacts to 
+# Gitlab CI 
+build:
+  image: 
+    name: maven:3.6.1-jdk-14
+  stage: build
+  # using the runner with docker tag in build stage
+  tags: 
+    - docker       
+  script:
+    - mvn package
+  artifacts:
+    paths:
+      - target/demo.war
+    expire_in: 1 week
+
+
+# Test stage with maven docker image
+test:
+  image: maven:3.6.1-jdk-14
+  stage: test
+  script:
+    - mvn test
+  # using runner with docker tag in Test stage
+  tags: 
+    - docker
+
+
+# image-build stage for Docker build and Dokcer push the 
+# maven artifacts
+image-build:
+  image:
+    name: docker:stable
+  stage: image-build
+  # using runner with docker build tag to use the other runner
+  # that can perform docker commands
+  tags:
+    - docker build  
+  script:
+    - docker login -u $REPOSITORY_NAME -p $PASSWORD
+    - docker build -t $REPOSITORY_NAME/$IMAGE_NAME:$CI_COMMIT_SHORT_SHA .
+    - docker push $REPOSITORY_NAME/$IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+  # downloading artifact from build stage
+  dependencies:
+    - build
+
+# Deply the Docker image to kubernetes(EKS) cluster
+deploy-to-dev:
+  image:
+    # customized docker image to setup kubeconfig and run kubectl for EKS 
+    name: suryalolla/kubectl-docker:0.0.1
+  stage: deploy-dev
+  # using runner with docker build tag to use the other runner
+  # that can perform docker commands
+  tags:
+    - docker build
+  variables:
+    DEPLOYMENT_NAME: web-application
+    SERVICE_NAME: web-application-service
+    KUBE_NAMESPACE: dev-env
+    APP_NAME: demo-app
+    APP_REPLICAS: 2
+    AWS_REGION: us-east-1
+    CLUSTER_NAME: EKS-Levvel
+  script:
+    - aws eks --region $AWS_REGION update-kubeconfig --name $CLUSTER_NAME
+    - chmod +x templates/*
+    - ./templates/deployment-template.sh true $DEPLOYMENT_NAME $KUBE_NAMESPACE $APP_NAME $APP_REPLICAS $REPOSITORY_NAME $IMAGE_NAME 
+    - ./templates/service-template.sh true $SERVICE_NAME $KUBE_NAMESPACE $APP_NAME
+    - kubectl apply -f deployment.yaml
+    - kubectl apply -f service.yaml
