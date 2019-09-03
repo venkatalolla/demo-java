@@ -1,10 +1,10 @@
-#Kubectl-docker image:
+# Kubectl-docker image:
 
 The Dockerfile creates a Kubectl command-line tool to configure Amazon's EKS cluster kubeconfig.
 
 Use the below Dockerfile to create your own EKS kubectl-docker image.
 
-#Dockerfile:
+# Dockerfile:
 ```
 FROM alpine
 LABEL maintainer="Surya Lolla surya.lolla@levvel.io"  
