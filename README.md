@@ -1,4 +1,4 @@
-# Demo Java Web App
+# Demo Java Web Application
 
 Simple java project demo that builds a war file and builds a deployable Docker image using `.gitlab-ci.yaml` file.
 
