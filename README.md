@@ -1,4 +1,4 @@
-# Demo Java Web App
+# Demo Java Web Application
 
 Simple java project demo that builds a war file and builds a deployable Docker image using `.gitlab-ci.yaml` file.
 
@@ -26,7 +26,7 @@ Here's an example of some things to check after running the build script:
     tomcat              8.5                 a92c139758db        2 weeks ago         558MB
     $
 
-## Docker Run in local
+## Docker Run in local machine
 
 Here are the summarized commands to run and test that Tomcat is serving the war file:
 
